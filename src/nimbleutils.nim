@@ -41,12 +41,16 @@ proc runTests*(backends: set[Backend] = {c},
   testsDir = "tests", recursiveDir = false,
   useRunCommand = false, extraOptions = "",
   hintsOff = true, warningsOff = false,
-  nimsSuffix = "_nims", backendExtraOptions = default(array[Backend, string])) =
+  nimsSuffix = "_nims", backendExtraOptions = default(array[Backend, string]),
+  optionCombos = @[""]) =
   ## run tests for multiple backends at the same time
   ## 
   ## `useRunCommand` is whether to use nim r or nim c -r,
   ## `nimsSuffix` is the suffix to add to temporary nims files to distinguish
   ## from normal nim sources
+  ## 
+  ## `optionCombos` are possible extra option combos, should include
+  ## `""` for no extra options
   echo "Running tests:"
   for fn in walkDirRec(testsDir, followFilter = if recursiveDir: {pcDir} else: {}):
     if (let (_, name, ext) = splitFile(fn);
@@ -65,14 +69,15 @@ proc runTests*(backends: set[Backend] = {c},
             $backend & " --run"
         template runTest(extraOpts: string = "", file: string = fn) =
           var testFailed = false
+          let fullCmd = "nim " & cmd &
+            (if hintsOff: " --hints:off" else: "") &
+            (if warningsOff: " --warnings:off" else: "") &
+            " --path:. " & extraOpts &
+            " " & extraOptions &
+            " " & backendExtraOptions[backend] &
+            " " & file
           try:
-            exec "nim " & cmd &
-              (if hintsOff: " --hints:off" else: "") &
-              (if warningsOff: " --warnings:off" else: "") &
-              " --path:. " & extraOpts &
-              " " & extraOptions &
-              " " & backendExtraOptions[backend] &
-              " " & file
+            exec fullCmd
             when false:
               const nimsTestFailFile = "nims_test_failed"
               if backend == nims and fileExists(nimsTestFailFile):
@@ -83,11 +88,15 @@ proc runTests*(backends: set[Backend] = {c},
             testFailed = true
           if testFailed:
             failedBackends.incl(backend)
-            echo "Failed backend: ", backend
+            echo "Failed command: ", fullCmd
           else:
-            echo "Passed backend: ", backend
-        template removeAfter(file: string, body: untyped) =
-          let toRemove = file
+            echo "Passed command: ", fullCmd
+        template runCombos(extraOpts: string = "", file: string = fn) =
+          for combo in optionCombos:
+            if combo.len != 0:
+              echo "Testing for options: ", combo
+            runTest(combo & " " & extraOpts, file)
+        template removeAfter(toRemove: string, body: untyped) =
           let toRemoveExisted = fileExists(toRemove)
           body
           if not toRemoveExisted and fileExists(toRemove):
@@ -96,17 +105,17 @@ proc runTests*(backends: set[Backend] = {c},
         of c, cpp, objc:
           let exe = if ExeExt == "": noExt else: noExt & "." & ExeExt 
           removeAfter(exe):
-            runTest()
+            runCombos()
         of js:
           let output = noExt & ".js" 
           removeAfter(output):
-            runTest(extraOpts = "-d:nodejs")
+            runCombos(extraOpts = "-d:nodejs")
         of nims:
           let nimsFile = noExt & nimsSuffix & ".nims"
           removeAfter(nimsFile):
             # maybe rename and rename back here
             cpFile(fn, nimsFile)
-            runTest(file = nimsFile)
+            runCombos(file = nimsFile)
       if failedBackends == {}:
         echo "Passed: ", name
       else:
