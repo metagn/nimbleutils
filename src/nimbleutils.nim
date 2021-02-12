@@ -1,11 +1,10 @@
 ## personal library for nimscript tasks
 
-import os, strutils
+import os, strutils, sequtils
 
 when not defined(nimscript):
   # {.warning: "nimbleutils is meant to be used inside nimscript".}
   import osproc
-  let srcDir = "src"
   proc exec(command: string) =
     let (output, exitCode) = execCmdEx(command)
     if exitCode != 0:
@@ -16,12 +15,15 @@ when not defined(nimscript):
   template rmFile(file: string) =
     removeFile(file)
 
-proc buildDocs*(
-  gitUrl = "", gitCommit = "master", gitDevel = "master";
+proc buildDocs*(dir = "src", 
+  gitUrl = "", gitCommit = "master", gitDevel = "master",
   extraOptions = "", outDir = "docs") =
   ## build docs for all modules in source folder
+  if not dirExists(dir):
+    echo "Cannot build docs, directory '", dir, "' does not exist"
+    return
   echo "Building docs:"
-  for f in walkDirRec(srcDir):
+  for f in walkDirRec(dir):
     if f.endsWith(".nim"):
       exec "nim doc" & (
         if gitUrl.len == 0:
@@ -52,12 +54,15 @@ proc runTests*(backends: set[Backend] = {c},
   ## `optionCombos` are possible extra option combos, should include
   ## `""` for no extra options
   echo "Running tests:"
+  var
+    failedBackends: set[Backend]
+    failedTests: seq[string]
   for fn in walkDirRec(testsDir, followFilter = if recursiveDir: {pcDir} else: {}):
     if (let (_, name, ext) = splitFile(fn);
       name[0] == 't' and ext == ".nim"):
       let noExt = fn[0..^(ext.len + 1)]
       echo "Test: ", name
-      var failedBackends: set[Backend]
+      var testFailedBackends: set[Backend]
       for backend in backends:
         echo "Backend: ", backend
         let cmd =
@@ -87,7 +92,7 @@ proc runTests*(backends: set[Backend] = {c},
             # exec exit code 1
             testFailed = true
           if testFailed:
-            failedBackends.incl(backend)
+            testFailedBackends.incl(backend)
             echo "Failed command: ", fullCmd
           else:
             echo "Passed command: ", fullCmd
@@ -116,7 +121,14 @@ proc runTests*(backends: set[Backend] = {c},
             # maybe rename and rename back here
             cpFile(fn, nimsFile)
             runCombos(file = nimsFile)
-      if failedBackends == {}:
-        echo "Passed: ", name
+      failedBackends.incl(testFailedBackends)
+      if testFailedBackends == {}:
+        echo "Test passed: ", name
       else:
-        echo "Failed: ", name, ", backends: ", ($failedBackends)[1..^2]
+        failedTests.add(name)
+        echo "Test failed: ", name, ", backends: ", ($testFailedBackends)[1..^2]
+  if failedTests.len == 0:
+    echo "All tests passed"
+  else:
+    echo "Failed tests: ", failedTests.join(", ")
+    echo "Failed backends: ", failedBackends.toSeq().join(", ")
