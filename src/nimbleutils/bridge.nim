@@ -82,10 +82,18 @@ else:
     
     var currentTest*: Test # threadvar
 
-    template check*(b: bool) =
-      if not b:
-        echo "Check failed: " & astToStr(b)
-        fail()
+    import macros
+    macro check*(b: untyped) =
+      if b.kind == nnkStmtList:
+        result = newStmtList()
+        for c in b:
+          result.add getAst(check(c))
+      else:
+        let str = newLit(repr(b))
+        result = quote do:
+          if not `b`:
+            echo "Check failed: " & `str`
+            fail()
 
     proc checkpoint*(s: string) = currentTest.checkpoints.add(s)
 
