@@ -137,9 +137,9 @@ proc runTest*(file: FilePath, options = testOptions()): tuple[name: string, fail
         testFailed = true
       if testFailed:
         result.failedBackends.incl(backend)
-        echo "Failed command: ", fullCmd
+        echo "Command failed: ", fullCmd
       else:
-        echo "Passed command: ", fullCmd
+        echo "Command passed: ", fullCmd
     template runCombos(extraOpts: string = "", filename: string = file) =
       for combo in options.optionCombos:
         if combo.len != 0:
