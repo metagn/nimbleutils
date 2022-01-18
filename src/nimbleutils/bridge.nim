@@ -49,7 +49,7 @@ when defined(js):
       except:
         let e = getCurrentException()
         if e.isNil:
-          {.emit: "console.trace(EXC);".}
+          {.emit: "console.trace(EXCEPTION);".}
           fail()
         else:
           raise e
@@ -64,6 +64,11 @@ when defined(js):
 
   template read*(path: NativeString): string = $fs.readFileSync(path)
   template write*(path, data: NativeString) = fs.writeFileSync(path, data)
+
+  template read*(path: string): string =
+    read(NativeString(path))
+  template write*(path, data: string | NativeString) =
+    write(NativeString(path), NativeString(data))
 
   proc `&`(a, b: cstring): cstring {.importjs: "(# + #)".}
 

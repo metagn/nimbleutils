@@ -1,7 +1,7 @@
 # Package
 
 version       = "0.2.1"
-author        = "hlaaftana"
+author        = "metagn"
 description   = "personal library for nimscript tasks"
 license       = "MIT"
 srcDir        = "src"
