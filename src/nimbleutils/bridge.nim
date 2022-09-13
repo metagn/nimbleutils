@@ -123,6 +123,7 @@ else:
           for c in currentTest.checkpoints:
             echo c
           echo "[FAILED] " & testName
+          quit(1)
         else:
           echo "[OK] " & testName
   else:
