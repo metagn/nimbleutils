@@ -195,6 +195,7 @@ proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
   else:
     echo "Failed tests: ", failedTests.join(", ")
     echo "Failed backends: ", failedBackends.toSeq().join(", ")
+    quit(1)
 
 proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
   recursiveDir = false,
