@@ -85,7 +85,8 @@ else:
       checkpoints*: seq[string]
       failed*: bool
     
-    var currentTest*: Test # threadvar
+    var currentTest* {.compileTime.}: Test # threadvar
+    # compileTime needed to circumvent some bugs
 
     import macros
     macro check*(b: untyped) =
