@@ -5,7 +5,7 @@
 when defined(nimscript):
   type FailedTests* = object of Defect
 
-  var anyFailedTests* = false
+  var anyFailedTests* {.compileTime.} = false
   # failed tests list could be redundant with runTests task
 
   template runTests*(body) =
