@@ -69,6 +69,11 @@ when defined(js):
     read(NativeString(path))
   template write*(path, data: string | NativeString) =
     write(NativeString(path), NativeString(data))
+  
+  template readFile*(path: string | NativeString): string =
+    read(path)
+  template writeFile*(path, data: string | NativeString) =
+    write(path, data)
 
   proc `&`(a, b: cstring): cstring {.importjs: "(# + #)".}
 
