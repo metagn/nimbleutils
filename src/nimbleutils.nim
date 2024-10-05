@@ -53,7 +53,7 @@ proc fileBuildDocs*(filename: FilePath,
     " " & filename
 
 proc buildDocs*(dir: seq[FilePath] | Dir = "src",
-  options = docsOptions(root = when dir is Dir: dir else: "")) =
+  options = docsOptions(rootDir = when dir is Dir: dir else: "")) =
   ## build docs for all modules in source folder
   ## if dir is seq of strings, it is a seq of files to make docs of
   if not dirExists(dir):
