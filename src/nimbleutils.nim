@@ -48,7 +48,7 @@ proc fileBuildDocs*(filename: FilePath,
     if options.rootDir.len == 0:
       ""
     else:
-      " --docroot:" & options.rootDir) &
+      " --path:" & options.rootDir) &
     " " & options.extraOptions &
     " " & filename
 
