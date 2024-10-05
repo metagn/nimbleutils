@@ -20,16 +20,17 @@ type FilePath* = string
 
 type DocsOptions* = object
   gitUrl*, gitCommit*, gitDevel*: string
-  outDir*: Dir
+  outDir*, rootDir*: Dir
   extraOptions*: string
 
 proc docsOptions*(
   gitUrl = "", gitCommit = "master", gitDevel = "master",
-  extraOptions = "", outDir = "docs"): DocsOptions =
+  extraOptions = "", outDir = "docs", rootDir = ""): DocsOptions =
   result.gitUrl = gitUrl
   result.gitCommit = gitCommit
   result.gitDevel = gitDevel
   result.outDir = outDir
+  result.rootDir = rootDir
   result.extraOptions = extraOptions
 
 proc fileBuildDocs*(filename: FilePath,
@@ -43,12 +44,16 @@ proc fileBuildDocs*(filename: FilePath,
       " --git.url:" & options.gitUrl &
       " --git.commit:" & options.gitCommit &
       " --git.devel:" & options.gitDevel) &
-    " --outdir:" & options.outDir &
+    " --outdir:" & options.outDir & (
+    if options.rootDir.len == 0:
+      ""
+    else:
+      " --docroot:" & options.rootDir) &
     " " & options.extraOptions &
     " " & filename
 
-proc buildDocs*(dir: seq[FilePath] | Dir = "src", 
-  options = docsOptions()) =
+proc buildDocs*(dir: seq[FilePath] | Dir = "src",
+  options = docsOptions(root = when dir is Dir: dir else: "")) =
   ## build docs for all modules in source folder
   ## if dir is seq of strings, it is a seq of files to make docs of
   if not dirExists(dir):
