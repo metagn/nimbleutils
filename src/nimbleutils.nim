@@ -52,8 +52,8 @@ proc fileBuildDocs*(filename: FilePath,
     " " & options.extraOptions &
     " " & filename
 
-proc buildDocs*(dir: seq[FilePath] | Dir = "src",
-  options = docsOptions(rootDir = when dir is Dir: dir else: "")) =
+proc buildDocs*(dir: Dir = "src",
+  options = docsOptions(rootDir = dir)) =
   ## build docs for all modules in source folder
   ## if dir is seq of strings, it is a seq of files to make docs of
   if not dirExists(dir):
@@ -61,20 +61,31 @@ proc buildDocs*(dir: seq[FilePath] | Dir = "src",
     return
 
   echo "Building docs:"
-  when dir is Dir:
-    for f in walkDirRec(dir):
-      if f.endsWith(".nim"):
-        fileBuildDocs(f, options)
-  else:
-    for f in dir:
+  for f in walkDirRec(dir):
+    if f.endsWith(".nim"):
       fileBuildDocs(f, options)
 
-proc buildDocs*(dir: seq[FilePath] | Dir = "src", 
-  gitUrl = "", gitCommit = "master", gitDevel = "master",
-  extraOptions = "", outDir = "docs") =
+proc buildDocs*(dir: seq[FilePath],
+  options = docsOptions()) =
   ## build docs for all modules in source folder
   ## if dir is seq of strings, it is a seq of files to make docs of
-  buildDocs(dir, docsOptions(gitUrl, gitCommit, gitDevel, extraOptions, outDir))
+  echo "Building docs:"
+  for f in dir:
+    fileBuildDocs(f, options)
+
+proc buildDocs*(dir: Dir = "src", 
+  gitUrl = "", gitCommit = "master", gitDevel = "master",
+  extraOptions = "", outDir = "docs", rootDir = dir) =
+  ## build docs for all modules in source folder
+  ## if dir is seq of strings, it is a seq of files to make docs of
+  buildDocs(dir, docsOptions(gitUrl, gitCommit, gitDevel, extraOptions, outDir, rootDir))
+
+proc buildDocs*(dir: seq[FilePath], 
+  gitUrl = "", gitCommit = "master", gitDevel = "master",
+  extraOptions = "", outDir = "docs", rootDir = "") =
+  ## build docs for all modules in source folder
+  ## if dir is seq of strings, it is a seq of files to make docs of
+  buildDocs(dir, docsOptions(gitUrl, gitCommit, gitDevel, extraOptions, outDir, rootDir))
 
 type Backend* = enum
   c, cpp, objc, js, nims
