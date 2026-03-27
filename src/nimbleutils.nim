@@ -6,10 +6,10 @@ when not defined(nimscript):
   # {.warning: "nimbleutils is meant to be used inside nimscript".}
   import osproc
   proc exec(command: string) =
-    let (output, exitCode) = execCmdEx(command)
+    let exitCode = execCmd(command)
     if exitCode != 0:
       raise newException(OSError, "FAILED: " & command)
-    echo output
+    #echo output
   template cpFile(src, dest: string) =
     copyFile(src, dest)
   template rmFile(file: string) =
