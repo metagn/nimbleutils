@@ -94,6 +94,8 @@ type TestOptions* = object
   backends*: set[Backend]
   useRunCommand*: bool
     ## whether to use `nim r` vs `nim c -r`
+  subcommand*: string
+    ## subcommand to override `c` or `r` or backend
   hintsOff*, warningsOff*: bool
   nimsSuffix*: string
     ## suffix for nims file to create if nims is as a backend
@@ -104,12 +106,13 @@ type TestOptions* = object
   backendExtraOptions*: array[Backend, string]
 
 proc testOptions*(backends: set[Backend] = {c},
-  useRunCommand = false, extraOptions = "",
+  useRunCommand = false, subcommand = "", extraOptions = "",
   hintsOff = true, warningsOff = false,
   nimsSuffix = "_nims", backendExtraOptions = default(array[Backend, string]),
   optionCombos = @[""]): TestOptions =
   result.backends = backends
   result.useRunCommand = useRunCommand
+  result.subcommand = subcommand
   result.extraOptions = extraOptions
   result.hintsOff = hintsOff
   result.warningsOff = warningsOff
@@ -126,7 +129,9 @@ proc runTest*(file: FilePath, options = testOptions()): tuple[name: string, fail
   for backend in options.backends:
     echo "Backend: ", backend
     let cmd =
-      if backend == nims:
+      if options.subcommand != "":
+        options.subcommand
+      elif backend == nims:
         "e"
       elif options.useRunCommand:
         "r --backend:" & $backend
@@ -216,10 +221,10 @@ proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
 proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
   recursiveDir = false,
   backends: set[Backend] = {c},
-  useRunCommand = false, extraOptions = "",
+  useRunCommand = false, subcommand = "", extraOptions = "",
   hintsOff = true, warningsOff = false,
   nimsSuffix = "_nims", backendExtraOptions = default(array[Backend, string]),
   optionCombos = @[""]) =
   ## run tests for multiple backends at the same time
-  runTests(testsDir, recursiveDir, testOptions(backends, useRunCommand,
+  runTests(testsDir, recursiveDir, testOptions(backends, useRunCommand, subcommand,
     extraOptions, hintsOff, warningsOff, nimsSuffix, backendExtraOptions, optionCombos))
