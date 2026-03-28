@@ -130,7 +130,7 @@ proc runTest*(file: FilePath, options = testOptions()): tuple[name: string, fail
     echo "Backend: ", backend
     let cmd =
       if options.subcommand != "":
-        options.subcommand
+        options.subcommand & " --backend:" & $backend
       elif backend == nims:
         "e"
       elif options.useRunCommand:
