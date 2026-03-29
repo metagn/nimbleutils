@@ -5,14 +5,14 @@ import os, strutils, sequtils
 when not defined(nimscript):
   # {.warning: "nimbleutils is meant to be used inside nimscript".}
   import osproc
-  proc exec(command: string) =
+  proc exec*(command: string) =
     let exitCode = execCmd(command)
     if exitCode != 0:
       raise newException(OSError, "FAILED: " & command)
     #echo output
-  template cpFile(src, dest: string) =
+  template cpFile*(src, dest: string) =
     copyFile(src, dest)
-  template rmFile(file: string) =
+  template rmFile*(file: string) =
     removeFile(file)
 
 type Dir* = string
