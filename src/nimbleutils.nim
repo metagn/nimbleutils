@@ -1,6 +1,6 @@
 ## personal library for nimscript tasks
 
-import os, strutils, sequtils
+import std/[os, strutils]
 
 when not defined(nimscript):
   # {.warning: "nimbleutils is meant to be used inside nimscript".}
@@ -120,7 +120,18 @@ proc testOptions*(backends: set[Backend] = {c},
   result.backendExtraOptions = backendExtraOptions
   result.optionCombos = optionCombos
 
-proc runTest*(file: FilePath, options = testOptions()): tuple[name: string, failedBackends: set[Backend]] =
+type
+  TestCombo* = object
+    backend*: Backend
+    options*: string
+  TestResult* = object
+    name*: string
+    failedCombos*: seq[TestCombo]
+
+proc `$`*(combo: TestCombo): string =
+  $combo.backend & " " & combo.options
+
+proc runTest*(file: FilePath, options = testOptions()): TestResult =
   ## runs single test file
   let (dir, name, _) = splitFile(file)
   result.name = name
@@ -157,7 +168,7 @@ proc runTest*(file: FilePath, options = testOptions()): tuple[name: string, fail
         # exec exit code 1
         testFailed = true
       if testFailed:
-        result.failedBackends.incl(backend)
+        result.failedCombos.add(TestCombo(backend: backend, options: extraOpts))
         echo "Command failed: ", fullCmd
       else:
         echo "Command passed: ", fullCmd
@@ -186,23 +197,20 @@ proc runTest*(file: FilePath, options = testOptions()): tuple[name: string, fail
         # maybe rename and rename back here
         cpFile(file, nimsFile)
         runCombos(filename = nimsFile)
-  if result.failedBackends == {}:
+  if result.failedCombos.len == 0:
     echo "Test passed: ", name
   else:
-    echo "Test failed: ", name, ", backends: ", ($result.failedBackends)[1..^2]
+    echo "Test failed: ", name, ", combos: ", ($result.failedCombos)[1..^2]
 
 proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
   recursiveDir = false, options = testOptions()) =
   ## run tests for multiple backends at the same time
   echo "Running tests:"
-  var
-    failedBackends: set[Backend]
-    failedTests: seq[string]
+  var failedTests: seq[string]
   template doTest(fn: FilePath) =
     let testResults = runTest(fn, options)
-    if testResults.failedBackends != {}:
-      failedBackends.incl(testResults.failedBackends)
-      failedTests.add(testResults.name)
+    if testResults.failedCombos.len != 0:
+      failedTests.add(testResults.name & ($result.failedCombos)[1..^2])
   when testsDir is Dir:
     for fn in walkDirRec(testsDir, followFilter = if recursiveDir: {pcDir} else: {}):
       if (let (_, name, ext) = splitFile(fn);
@@ -215,7 +223,6 @@ proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
     echo "All tests passed"
   else:
     echo "Failed tests: ", failedTests.join(", ")
-    echo "Failed backends: ", failedBackends.toSeq().join(", ")
     quit(1)
 
 proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
