@@ -200,7 +200,7 @@ proc runTest*(file: FilePath, options = testOptions()): TestResult =
   if result.failedCombos.len == 0:
     echo "Test passed: ", name
   else:
-    echo "Test failed: ", name, ", combos: ", ($result.failedCombos)[1..^2]
+    echo "Test failed: ", name, ", combos: ", ($result.failedCombos)[1..^1]
 
 proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
   recursiveDir = false, options = testOptions()) =
@@ -210,7 +210,7 @@ proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
   template doTest(fn: FilePath) =
     let testResults = runTest(fn, options)
     if testResults.failedCombos.len != 0:
-      failedTests.add(testResults.name & ($testResults.failedCombos)[1..^2])
+      failedTests.add(testResults.name & ($testResults.failedCombos)[1..^1])
   when testsDir is Dir:
     for fn in walkDirRec(testsDir, followFilter = if recursiveDir: {pcDir} else: {}):
       if (let (_, name, ext) = splitFile(fn);
