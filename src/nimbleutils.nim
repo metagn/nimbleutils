@@ -210,7 +210,7 @@ proc runTests*(testsDir: Dir | seq[FilePath] = "tests",
   template doTest(fn: FilePath) =
     let testResults = runTest(fn, options)
     if testResults.failedCombos.len != 0:
-      failedTests.add(testResults.name & ($result.failedCombos)[1..^2])
+      failedTests.add(testResults.name & ($testResults.failedCombos)[1..^2])
   when testsDir is Dir:
     for fn in walkDirRec(testsDir, followFilter = if recursiveDir: {pcDir} else: {}):
       if (let (_, name, ext) = splitFile(fn);
